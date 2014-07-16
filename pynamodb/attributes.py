@@ -181,6 +181,8 @@ class JSONAttribute(Attribute):
         """
         if value is None:
             return None
+        if isinstance(value, six.string_types):
+            return value
         encoded = json.dumps(value)
         return six.u(encoded)
 

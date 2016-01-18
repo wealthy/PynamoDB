@@ -7,32 +7,26 @@ from base64 import b64encode, b64decode
 from delorean import Delorean, parse
 from pynamodb.constants import (
     STRING, NUMBER, BINARY, UTC, DATETIME_FORMAT, BINARY_SET, STRING_SET, NUMBER_SET,
-    DEFAULT_ENCODING
+    MAP, LIST, DEFAULT_ENCODING, ATTR_TYPE_MAP
 )
 
-
-class Attribute(object):
+class BaseAttribute(object):
     """
-    An attribute of a model
+    Base class for all attributes. This should not be extended, instead one of the attribute 
+    classes should be extended, instantiated.
     """
-    attr_name = None
     attr_type = None
-    null = False
+    null = True
 
-    def __init__(self,
-                 hash_key=False,
-                 range_key=False,
-                 null=None,
-                 default=None,
-                 attr_name=None
-                 ):
+    def __init__(self, 
+                null=None, 
+                default=None
+                ):
         self.default = default
         if null is not None:
             self.null = null
-        self.is_hash_key = hash_key
-        self.is_range_key = range_key
         if attr_name is not None:
-            self.attr_name = attr_name
+            self.attr_name = attr_name        
 
     def __set__(self, instance, value):
         if isinstance(value, Attribute):
@@ -57,6 +51,30 @@ class Attribute(object):
         Performs any needed deserialization on the value
         """
         return value
+
+
+class Attribute(BaseAttribute):
+    """
+    An attribute of a model
+    """
+    null = False
+    attr_name = None
+
+    def __init__(self,
+                 hash_key=False,
+                 range_key=False,
+                 null=None,
+                 default=None,
+                 attr_name=None
+                 ):
+        self.is_hash_key = hash_key
+        self.is_range_key = range_key
+        if attr_name is not None:
+            self.attr_name = attr_name
+        super(Attribute, self).__init__(
+                                    null=null, 
+                                    default=default
+                                    )
 
 
 class SetMixin(object):
@@ -87,9 +105,10 @@ class SetMixin(object):
             return set([json.loads(val) for val in value])
 
 
-class BinaryAttribute(Attribute):
+class BaseBinaryAttribute(BaseAttribute):
     """
-    A binary attribute
+    Base class for binary attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
     """
     attr_type = BINARY
 
@@ -107,6 +126,13 @@ class BinaryAttribute(Attribute):
             return b64decode(value.decode(DEFAULT_ENCODING))
         except AttributeError:
             return b64decode(value)
+
+
+class BinaryAttribute(Attribute, BaseBinaryAttribute):
+    """
+    A binary attribute
+    """
+    pass
 
 
 class BinarySetAttribute(SetMixin, Attribute):
@@ -141,9 +167,10 @@ class UnicodeSetAttribute(SetMixin, Attribute):
     null = True
 
 
-class UnicodeAttribute(Attribute):
+class BaseUnicodeAttribute(BaseAttribute):
     """
-    A unicode attribute
+    Base class for unicode attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
     """
     attr_type = STRING
 
@@ -157,6 +184,13 @@ class UnicodeAttribute(Attribute):
             return value
         else:
             return six.u(value)
+
+
+class UnicodeAttribute(Attribute, BaseUnicodeAttribute):
+    """
+    A unicode attribute
+    """
+    pass
 
 
 class JSONAttribute(Attribute):
@@ -186,11 +220,10 @@ class JSONAttribute(Attribute):
         return json.loads(value, strict=False)
 
 
-class BooleanAttribute(Attribute):
+class BaseBooleanAttribute(BaseAttribute):
     """
-    A class for boolean attributes
-
-    This attribute type uses a number attribute to save space
+    Base class for boolean attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
     """
     attr_type = NUMBER
 
@@ -209,7 +242,16 @@ class BooleanAttribute(Attribute):
         """
         Encode
         """
-        return bool(json.loads(value))
+        return bool(json.loads(value))    
+
+
+class BooleanAttribute(Attribute, BaseBooleanAttribute):
+    """
+    A class for boolean attributes
+    This attribute type uses a number attribute to save space
+    TODO@rohan - Could switch to using the dynamodb boolean attributes.
+    """
+    pass
 
 
 class NumberSetAttribute(SetMixin, Attribute):
@@ -220,9 +262,10 @@ class NumberSetAttribute(SetMixin, Attribute):
     null = True
 
 
-class NumberAttribute(Attribute):
+class BaseNumberAttribute(BaseAttribute):
     """
-    A number attribute
+    Base class for number attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
     """
     attr_type = NUMBER
 
@@ -237,6 +280,13 @@ class NumberAttribute(Attribute):
         Decode numbers from JSON
         """
         return json.loads(value)
+
+
+class NumberAttribute(Attribute, BaseNumberAttribute):
+    """
+    A number attribute
+    """
+    pass
 
 
 class UTCDateTimeAttribute(Attribute):
@@ -257,3 +307,95 @@ class UTCDateTimeAttribute(Attribute):
         Takes a UTC datetime string and returns a datetime object
         """
         return parse(value).datetime
+
+
+class BaseMapAttribute(BaseAttribute):
+    """
+    Base class for map attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
+    """
+    attr_type = MAP
+
+    def serialize(self, dictionary):
+        """
+        """
+        attrs = {}
+        if not isinstance(dictionary, dict):
+            raise TypeError("Only map(dict) types can be serialized using this method. Use the " + 
+                "other pynamodb types if a map is not being used.")
+        for key, value in dictionary.iteritems():
+            if not isinstance(key, basestring):
+                raise TypeError("Map keys must be strings.")
+            value_type = get_pynamo_type(value)
+            serialized = value_type.serialize(value)
+            attrs[key] = {
+                ATTR_TYPE_MAP[value_type.attr_type] : serialized
+            }
+        return attrs
+
+    def deserialize(self, value):
+        """
+        """
+        return "test"
+
+
+class MapAttribute(Attribute, BaseMapAttribute):
+    """
+    A Map attribute. Makes use of the dynamodb document data types.
+    """
+    pass
+
+
+class BaseListAttribute(BaseAttribute):
+    """
+    Base class for list attributes. This is used to serialize/deserialize nested attributes
+    in maps and lists
+    """
+    attr_type = LIST
+
+    def serialize(self, values):
+        """
+        """
+        attrs = []
+        if not isinstance(values, list):
+            raise TypeError("Only list types can be serialized using this method." + 
+                " Use other pynamodb types if a list is not being used.")
+        for value in values:
+            value_type = get_pynamo_type(value)
+            serialized = value_type.serialize(value)
+            attrs.append({
+                ATTR_TYPE_MAP[value_type.attr_type] : serialized
+            })
+        return attrs
+
+    def deserialize(self, value):
+        """
+        """
+        return "test"
+
+
+class ListAttribute(Attribute, BaseListAttribute):
+    """
+    A List attribute. Makes use of the dynamodb document data types.
+    """
+    pass
+
+
+STRING_TYPE = BaseUnicodeAttribute()
+NUMBER_TYPE = BaseNumberAttribute()
+BOOLEAN_TYPE = BaseBooleanAttribute()
+# BINARY_TYPE = BaseBinaryAttribute()
+MAP_TYPE = BaseMapAttribute()
+LIST_TYPE = BaseListAttribute()
+
+def get_pynamo_type(value):
+    # value_type = type(value)
+    if isinstance(value, basestring):
+        return STRING_TYPE
+    elif isinstance(value, (int, float)):
+        return NUMBER_TYPE
+    elif isinstance(value, dict):
+        return MAP_TYPE
+    elif isinstance(value, list):
+        return LIST_TYPE
+    raise TypeError("Trying to use a python type that is not supported. Only, string, int, float, dict and list are supported.")

@@ -7,7 +7,7 @@ from __future__ import print_function
 import logging
 from pynamodb.models import Model
 from pynamodb.attributes import (
-    UnicodeAttribute, NumberAttribute, UnicodeSetAttribute, UTCDateTimeAttribute
+    UnicodeAttribute, NumberAttribute, UnicodeSetAttribute, UTCDateTimeAttribute, MapAttribute, ListAttribute
 )
 from datetime import datetime
 

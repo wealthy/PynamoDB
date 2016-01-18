@@ -109,6 +109,8 @@ class BaseBinaryAttribute(BaseAttribute):
     """
     Base class for binary attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = BINARY
 
@@ -171,6 +173,8 @@ class BaseUnicodeAttribute(BaseAttribute):
     """
     Base class for unicode attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = STRING
 
@@ -224,6 +228,8 @@ class BaseBooleanAttribute(BaseAttribute):
     """
     Base class for boolean attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = NUMBER
 
@@ -266,6 +272,8 @@ class BaseNumberAttribute(BaseAttribute):
     """
     Base class for number attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = NUMBER
 
@@ -313,6 +321,8 @@ class BaseMapAttribute(BaseAttribute):
     """
     Base class for map attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = MAP
 
@@ -350,6 +360,8 @@ class BaseListAttribute(BaseAttribute):
     """
     Base class for list attributes. This is used to serialize/deserialize nested attributes
     in maps and lists
+
+    This class should not be instantiated outside this module.
     """
     attr_type = LIST
 

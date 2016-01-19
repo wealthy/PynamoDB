@@ -10,6 +10,8 @@ from pynamodb.constants import (
     MAP, LIST, DEFAULT_ENCODING, ATTR_TYPE_MAP
 )
 
+# TODO@rohan add support for the dynamo null data type.
+
 class BaseAttribute(object):
     """
     Base class for all attributes. This should not be extended, instead one of the attribute 
@@ -314,6 +316,8 @@ class BaseMapAttribute(BaseAttribute):
             raise TypeError("Only map(dict) types can be serialized using this method. Use the " + 
                 "other pynamodb types if a map is not being used.")
         for key, value in dictionary.iteritems():
+            if value is None:
+                continue
             if not isinstance(key, basestring):
                 raise TypeError("Map keys must be strings.")
             value_type = get_pynamo_type(value)
@@ -356,6 +360,8 @@ class BaseListAttribute(BaseAttribute):
             raise TypeError("Only list types can be serialized using this method." + 
                 " Use other pynamodb types if a list is not being used.")
         for value in values:
+            if value is None:
+                continue
             value_type = get_pynamo_type(value)
             serialized = value_type.serialize(value)
             attrs.append({
@@ -398,7 +404,9 @@ def get_pynamo_type(value):
         return MAP_TYPE
     elif isinstance(value, list):
         return LIST_TYPE
-    raise TypeError("Trying to use a python type that is not supported. Only, string, int, float, dict and list are supported.")
+    raise TypeError("Trying to use a python type that is not supported." + 
+        " Only, string, int, float, dict and list are supported." + 
+        " Type: " + type(value).__name__)
 
 def get_python_type(dynamo_value):
     if not isinstance(dynamo_value, dict):

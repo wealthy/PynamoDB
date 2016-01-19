@@ -22,11 +22,9 @@ class BaseAttribute(object):
                 null=None, 
                 default=None
                 ):
-        self.default = default
         if null is not None:
             self.null = null
-        if attr_name is not None:
-            self.attr_name = attr_name        
+        self.default = default
 
     def __set__(self, instance, value):
         if isinstance(value, Attribute):
@@ -346,7 +344,10 @@ class BaseMapAttribute(BaseAttribute):
     def deserialize(self, value):
         """
         """
-        return "test"
+        data = {}
+        for key, item in value.iteritems():
+            data[key] = get_python_type(item)
+        return data
 
 
 class MapAttribute(Attribute, BaseMapAttribute):
@@ -383,7 +384,10 @@ class BaseListAttribute(BaseAttribute):
     def deserialize(self, value):
         """
         """
-        return "test"
+        data = []
+        for item in value:
+            data.append(get_python_type(item))
+        return data
 
 
 class ListAttribute(Attribute, BaseListAttribute):
@@ -400,8 +404,8 @@ BOOLEAN_TYPE = BaseBooleanAttribute()
 MAP_TYPE = BaseMapAttribute()
 LIST_TYPE = BaseListAttribute()
 
+#TODO@rohan - switch to using the boolean type in Pynamo and storing it as true or false. 
 def get_pynamo_type(value):
-    # value_type = type(value)
     if isinstance(value, basestring):
         return STRING_TYPE
     elif isinstance(value, (int, float)):
@@ -411,3 +415,17 @@ def get_pynamo_type(value):
     elif isinstance(value, list):
         return LIST_TYPE
     raise TypeError("Trying to use a python type that is not supported. Only, string, int, float, dict and list are supported.")
+
+def get_python_type(dynamo_value):
+    if not isinstance(dynamo_value, dict):
+        raise TypeError("The dict object returned by dynamodb should be parsed for getting the python native type.")
+    value_type = dynamo_value.keys()[0]
+    if ATTR_TYPE_MAP[value_type] == STRING:
+        return STRING_TYPE.deserialize(dynamo_value[value_type])
+    elif ATTR_TYPE_MAP[value_type] == NUMBER:
+        return NUMBER_TYPE.deserialize(dynamo_value[value_type])
+    elif ATTR_TYPE_MAP[value_type] == MAP:
+        return MAP_TYPE.deserialize(dynamo_value[value_type])
+    elif ATTR_TYPE_MAP[value_type] == LIST:
+        return LIST_TYPE.deserialize(dynamo_value[value_type])
+    raise TypeError("The given Dynamodb type is not supported. Type: " + value_type)

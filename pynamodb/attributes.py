@@ -388,7 +388,9 @@ LIST_TYPE = BaseListAttribute()
 
 #TODO@rohan - switch to using the boolean type in Pynamo and storing it as true or false. 
 def get_pynamo_type(value):
-    if isinstance(value, basestring):
+    if isinstance(value, bool):
+        return BOOLEAN_TYPE
+    elif isinstance(value, basestring):
         return STRING_TYPE
     elif isinstance(value, (int, float)):
         return NUMBER_TYPE
@@ -402,7 +404,9 @@ def get_python_type(dynamo_value):
     if not isinstance(dynamo_value, dict):
         raise TypeError("The dict object returned by dynamodb should be parsed for getting the python native type.")
     value_type = dynamo_value.keys()[0]
-    if ATTR_TYPE_MAP[value_type] == STRING:
+    if ATTR_TYPE_MAP[value_type] == BOOLEAN:
+        return BOOLEAN_TYPE.deserialize(dynamo_value[value_type])
+    elif ATTR_TYPE_MAP[value_type] == STRING:
         return STRING_TYPE.deserialize(dynamo_value[value_type])
     elif ATTR_TYPE_MAP[value_type] == NUMBER:
         return NUMBER_TYPE.deserialize(dynamo_value[value_type])

@@ -6,7 +6,7 @@ import json
 from base64 import b64encode, b64decode
 from delorean import Delorean, parse
 from pynamodb.constants import (
-    STRING, NUMBER, BINARY, UTC, DATETIME_FORMAT, BINARY_SET, STRING_SET, NUMBER_SET,
+    STRING, NUMBER, BOOLEAN, BINARY, UTC, DATETIME_FORMAT, BINARY_SET, STRING_SET, NUMBER_SET,
     MAP, LIST, DEFAULT_ENCODING, ATTR_TYPE_MAP
 )
 
@@ -229,31 +229,13 @@ class BaseBooleanAttribute(BaseAttribute):
 
     This class should not be instantiated outside this module.
     """
-    attr_type = NUMBER
-
-    def serialize(self, value):
-        """
-        Encodes True as 1, False as 0
-        """
-        if value is None:
-            return None
-        elif value:
-            return json.dumps(1)
-        else:
-            return json.dumps(0)
-
-    def deserialize(self, value):
-        """
-        Encode
-        """
-        return bool(json.loads(value))    
+    attr_type = BOOLEAN
 
 
 class BooleanAttribute(Attribute, BaseBooleanAttribute):
     """
     A class for boolean attributes
     This attribute type uses a number attribute to save space
-    TODO@rohan - Could switch to using the dynamodb boolean attributes.
     """
     pass
 

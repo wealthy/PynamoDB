@@ -23,8 +23,8 @@ from pynamodb.constants import (
     BATCH_WRITE_ITEM, CONSISTENT_READ, ATTR_VALUE_LIST, DESCRIBE_TABLE, DEFAULT_REGION, KEY_CONDITIONS,
     BATCH_GET_ITEM, DELETE_REQUEST, SELECT_VALUES, RETURN_VALUES, REQUEST_ITEMS, ATTR_UPDATES,
     ATTRS_TO_GET, SERVICE_NAME, DELETE_ITEM, PUT_REQUEST, UPDATE_ITEM, SCAN_FILTER, TABLE_NAME,
-    INDEX_NAME, KEY_SCHEMA, ATTR_NAME, ATTR_TYPE, TABLE_KEY, EXPECTED, KEY_TYPE, GET_ITEM, UPDATE,
-    PUT_ITEM, SELECT, ACTION, EXISTS, VALUE, LIMIT, QUERY, SCAN, ITEM, LOCAL_SECONDARY_INDEXES,
+    INDEX_NAME, KEY_SCHEMA, ATTR_NAME, ATTR_TYPE, TABLE_KEY, EXPECTED, KEY_TYPE, GET_ITEM, CREATE, UPDATE,
+    DELETE, PUT_ITEM, SELECT, ACTION, EXISTS, VALUE, LIMIT, QUERY, SCAN, ITEM, LOCAL_SECONDARY_INDEXES,
     KEYS, KEY, EQ, SEGMENT, TOTAL_SEGMENTS, CREATE_TABLE, PROVISIONED_THROUGHPUT, READ_CAPACITY_UNITS,
     WRITE_CAPACITY_UNITS, GLOBAL_SECONDARY_INDEXES, PROJECTION, EXCLUSIVE_START_TABLE_NAME, TOTAL,
     DELETE_TABLE, UPDATE_TABLE, LIST_TABLES, GLOBAL_SECONDARY_INDEX_UPDATES,
@@ -477,17 +477,59 @@ class Connection(object):
         if global_secondary_indexes:
             global_secondary_indexes_list = []
             for index in global_secondary_indexes:
-                global_secondary_indexes_list.append({
+                global_secondary_indexes_list.append({ CREATE : {
                     INDEX_NAME: index.get(pythonic(INDEX_NAME)),
                     KEY_SCHEMA: sorted(index.get(pythonic(KEY_SCHEMA)), key=lambda x: x.get(KEY_TYPE)),
                     PROJECTION: index.get(pythonic(PROJECTION)),
                     PROVISIONED_THROUGHPUT: index.get(pythonic(PROVISIONED_THROUGHPUT))
-                })
-            operation_kwargs[GLOBAL_SECONDARY_INDEXES] = global_secondary_indexes_list
+                }})
+            operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES] = global_secondary_indexes_list
         try:
             return self.dispatch(UPDATE_TABLE, operation_kwargs)
         except BOTOCORE_EXCEPTIONS as e:
-            raise TableError("Failed to update table: {0}".format(e))            
+            raise TableError("Failed to update table: {0}".format(e))
+
+    def update_indexes(self, 
+        table_name,
+        global_secondary_indexes=None):
+        """
+        TODO@rohan
+        """
+        if global_secondary_indexes:
+            operation_kwargs = {
+                TABLE_NAME: table_name,
+                GLOBAL_SECONDARY_INDEX_UPDATES : []
+            }
+            for index in global_secondary_indexes:
+                operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES].append({ UPDATE : {
+                    INDEX_NAME: index.get(pythonic(INDEX_NAME)),
+                    PROVISIONED_THROUGHPUT: index.get(pythonic(PROVISIONED_THROUGHPUT))
+                }})
+            try:
+                return self.dispatch(UPDATE_TABLE, operation_kwargs)
+            except BOTOCORE_EXCEPTIONS as e:
+                raise TableError("Failed to update table: {0}".format(e))
+
+
+    def delete_indexes(self, 
+        table_name,
+        global_secondary_indexes=None):
+        """
+        TODO@rohan
+        """
+        if global_secondary_indexes:
+            operation_kwargs = {
+                TABLE_NAME: table_name,
+                GLOBAL_SECONDARY_INDEX_UPDATES : []
+            }
+            for index in global_secondary_indexes:
+                operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES].append({ DELETE : {
+                    INDEX_NAME: index.get(pythonic(INDEX_NAME))
+                }})
+            try:
+                return self.dispatch(UPDATE_TABLE, operation_kwargs)
+            except BOTOCORE_EXCEPTIONS as e:
+                raise TableError("Failed to update table: {0}".format(e))
 
     def list_tables(self, exclusive_start_table_name=None, limit=None):
         """

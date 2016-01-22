@@ -219,6 +219,24 @@ class TableConnection(object):
             fields=fields,
             global_secondary_indexes=global_secondary_indexes)
 
+    def update_indexes(self, 
+        global_secondary_indexes=None):
+        """
+        TODO@rohan
+        """
+        return self.connection.update_indexes(
+            self.table_name,
+            global_secondary_indexes=global_secondary_indexes)
+
+    def delete_indexes(self, 
+        global_secondary_indexes=None):
+        """
+        TODO@rohan
+        """
+        return self.connection.delete_indexes(
+            self.table_name,
+            global_secondary_indexes=global_secondary_indexes)
+
     def create_table(self,
                      attribute_definitions=None,
                      key_schema=None,

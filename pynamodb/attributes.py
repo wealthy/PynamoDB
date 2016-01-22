@@ -392,8 +392,10 @@ BOOLEAN_TYPE = BaseBooleanAttribute()
 MAP_TYPE = BaseMapAttribute()
 LIST_TYPE = BaseListAttribute()
 
-#TODO@rohan - switch to using the boolean type in Pynamo and storing it as true or false. 
+# TODO@rohan - switch to using the boolean type in Pynamo and storing it as true or false. 
 def get_pynamo_type(value):
+    """
+    """
     if isinstance(value, bool):
         return BOOLEAN_TYPE
     elif isinstance(value, basestring):
@@ -409,6 +411,8 @@ def get_pynamo_type(value):
         " Type: " + type(value).__name__)
 
 def get_python_type(dynamo_value):
+    """
+    """
     if not isinstance(dynamo_value, dict):
         raise TypeError("The dict object returned by dynamodb should be parsed for getting the python native type.")
     value_type = dynamo_value.keys()[0]

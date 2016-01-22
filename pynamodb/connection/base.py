@@ -524,7 +524,7 @@ class Connection(object):
             }
             for index in global_secondary_indexes:
                 operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES].append({ DELETE : {
-                    INDEX_NAME: index.get(pythonic(INDEX_NAME))
+                    INDEX_NAME: pythonic(index)
                 }})
             try:
                 return self.dispatch(UPDATE_TABLE, operation_kwargs)

@@ -406,9 +406,17 @@ class Connection(object):
                      table_name,
                      read_capacity_units=None,
                      write_capacity_units=None,
-                     global_secondary_index_updates=None):
+                     global_secondary_index_updates=None,
+                     fields=None):
         """
         Performs the UpdateTable operation
+        Has limits with update. 
+            - Will not be able to create or delete an index. 
+            - May fail if too many operations are tried at the same time. 
+        TODO@rohan - Here the update operations do not account for the fact
+            that dynamodb allows only one update per update operation. 
+            https://botocore.readthedocs.org/en/latest/reference/services/dynamodb.html#DynamoDB.Client.update_table
+            http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html
         """
         operation_kwargs = {
             TABLE_NAME: table_name
@@ -433,10 +441,53 @@ class Connection(object):
                     }
                 })
             operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES] = global_secondary_indexes_list
+        if fields:
+            attr_list = []
+            for field in fields:
+                attr_list.append({
+                    ATTR_NAME: field.get(pythonic(ATTR_NAME)),
+                    ATTR_TYPE: field.get(pythonic(ATTR_TYPE))
+                })
+            operation_kwargs[ATTR_DEFINITIONS] = attr_list
         try:
             return self.dispatch(UPDATE_TABLE, operation_kwargs)
         except BOTOCORE_EXCEPTIONS as e:
             raise TableError("Failed to update table: {0}".format(e))
+
+    def add_field_index(self,
+                  table_name,
+                  fields=None,
+                  global_secondary_indexes=None):
+        """
+        Will add fields and indexes that did not previously exist on the table.
+        Only available for global secondary indexes.
+        Fields or indexes or both can be added at the same time.
+        """
+        operation_kwargs = {
+            TABLE_NAME: table_name
+        }
+        if fields:
+            attr_list = []
+            for field in fields:
+                attr_list.append({
+                    ATTR_NAME: field.get(pythonic(ATTR_NAME)),
+                    ATTR_TYPE: field.get(pythonic(ATTR_TYPE))
+                })
+            operation_kwargs[ATTR_DEFINITIONS] = attr_list
+        if global_secondary_indexes:
+            global_secondary_indexes_list = []
+            for index in global_secondary_indexes:
+                global_secondary_indexes_list.append({
+                    INDEX_NAME: index.get(pythonic(INDEX_NAME)),
+                    KEY_SCHEMA: sorted(index.get(pythonic(KEY_SCHEMA)), key=lambda x: x.get(KEY_TYPE)),
+                    PROJECTION: index.get(pythonic(PROJECTION)),
+                    PROVISIONED_THROUGHPUT: index.get(pythonic(PROVISIONED_THROUGHPUT))
+                })
+            operation_kwargs[GLOBAL_SECONDARY_INDEXES] = global_secondary_indexes_list
+        try:
+            return self.dispatch(UPDATE_TABLE, operation_kwargs)
+        except BOTOCORE_EXCEPTIONS as e:
+            raise TableError("Failed to update table: {0}".format(e))            
 
     def list_tables(self, exclusive_start_table_name=None, limit=None):
         """

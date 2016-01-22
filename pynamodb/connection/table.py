@@ -192,12 +192,32 @@ class TableConnection(object):
                      global_secondary_index_updates=None):
         """
         Performs the UpdateTable operation and returns the result
+        Has limits with update. 
+            - Will not be able to create or delete an index. 
+            - May fail if too many operations are tried at the same time. 
+        TODO@rohan - Here the update operations do not account for the fact
+            that dynamodb allows only one update per update operation. 
+            https://botocore.readthedocs.org/en/latest/reference/services/dynamodb.html#DynamoDB.Client.update_table
+            http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html
         """
         return self.connection.update_table(
             self.table_name,
             read_capacity_units=read_capacity_units,
             write_capacity_units=write_capacity_units,
             global_secondary_index_updates=global_secondary_index_updates)
+
+    def add_field_index(self,
+                  fields=None,
+                  global_secondary_indexes=None):
+        """
+        Will add fields and indexes that did not previously exist on the table.
+        Only available for global secondary indexes.
+        Fields or indexes or both can be added at the same time.
+        """
+        return self.connection.add_field_index(
+            self.table_name,
+            fields=fields,
+            global_secondary_indexes=global_secondary_indexes)
 
     def create_table(self,
                      attribute_definitions=None,

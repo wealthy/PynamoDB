@@ -463,9 +463,12 @@ class Connection(object):
         Only available for global secondary indexes.
         Fields or indexes or both can be added at the same time.
         """
+        if not global_secondary_indexes:
+            return
         operation_kwargs = {
             TABLE_NAME: table_name
         }
+
         if fields:
             attr_list = []
             for field in fields:
@@ -474,16 +477,17 @@ class Connection(object):
                     ATTR_TYPE: field.get(pythonic(ATTR_TYPE))
                 })
             operation_kwargs[ATTR_DEFINITIONS] = attr_list
-        if global_secondary_indexes:
-            global_secondary_indexes_list = []
-            for index in global_secondary_indexes:
-                global_secondary_indexes_list.append({ CREATE : {
-                    INDEX_NAME: index.get(pythonic(INDEX_NAME)),
-                    KEY_SCHEMA: sorted(index.get(pythonic(KEY_SCHEMA)), key=lambda x: x.get(KEY_TYPE)),
-                    PROJECTION: index.get(pythonic(PROJECTION)),
-                    PROVISIONED_THROUGHPUT: index.get(pythonic(PROVISIONED_THROUGHPUT))
-                }})
-            operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES] = global_secondary_indexes_list
+
+        global_secondary_indexes_list = []
+        for index in global_secondary_indexes:
+            global_secondary_indexes_list.append({ CREATE : {
+                INDEX_NAME: index.get(pythonic(INDEX_NAME)),
+                KEY_SCHEMA: sorted(index.get(pythonic(KEY_SCHEMA)), key=lambda x: x.get(KEY_TYPE)),
+                PROJECTION: index.get(pythonic(PROJECTION)),
+                PROVISIONED_THROUGHPUT: index.get(pythonic(PROVISIONED_THROUGHPUT))
+            }})
+        operation_kwargs[GLOBAL_SECONDARY_INDEX_UPDATES] = global_secondary_indexes_list
+
         try:
             return self.dispatch(UPDATE_TABLE, operation_kwargs)
         except BOTOCORE_EXCEPTIONS as e:

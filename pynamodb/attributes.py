@@ -316,7 +316,12 @@ class BaseMapAttribute(BaseAttribute):
             raise TypeError("Only map(dict) types can be serialized using this method. Use the " + 
                 "other pynamodb types if a map is not being used.")
         for key, value in dictionary.iteritems():
-            if value is None:
+            # `not value` is added because dynamodb has issues with empty string and empty 
+            # nested objects of empty nested lists. 
+            # ideally, this should be fixed properly, and not by using `not value`. 
+            # Need a better solution here. 
+            # TODO@rohan
+            if value is None or not value:
                 continue
             if not isinstance(key, basestring):
                 raise TypeError("Map keys must be strings.")
@@ -360,7 +365,12 @@ class BaseListAttribute(BaseAttribute):
             raise TypeError("Only list types can be serialized using this method." + 
                 " Use other pynamodb types if a list is not being used.")
         for value in values:
-            if value is None:
+            # `not value` is added because dynamodb has issues with empty string and empty 
+            # nested objects of empty nested lists. 
+            # ideally, this should be fixed properly, and not by using `not value`. 
+            # Need a better solution here. 
+            # TODO@rohan
+            if value is None or not value:
                 continue
             value_type = get_pynamo_type(value)
             serialized = value_type.serialize(value)

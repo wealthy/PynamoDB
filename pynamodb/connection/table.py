@@ -10,11 +10,14 @@ class TableConnection(object):
     A higher level abstraction over botocore
     """
 
-    def __init__(self, table_name, region=None, host=None):
+    def __init__(self, table_name, region=None, host=None, 
+            aws_access_key_id=None, aws_secret_access_key=None):
         self._hash_keyname = None
         self._range_keyname = None
         self.table_name = table_name
-        self.connection = Connection(region=region, host=host)
+        self.connection = Connection(region=region, host=host, 
+            aws_access_key_id=aws_access_key_id, 
+            aws_secret_access_key=aws_secret_access_key)
 
     def delete_item(self, hash_key,
                     range_key=None,

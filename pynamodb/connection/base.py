@@ -170,12 +170,15 @@ class Connection(object):
     A higher level abstraction over botocore
     """
 
-    def __init__(self, region=None, host=None):
+    def __init__(self, region=None, host=None, 
+        aws_access_key_id=None, aws_secret_access_key=None):
         self._tables = {}
         self.host = host
         self._session = None
         self._requests_session = None
         self._client = None
+        self.aws_access_key_id = aws_access_key_id
+        self.aws_secret_access_key = aws_secret_access_key
         if region:
             self.region = region
         else:
@@ -294,7 +297,9 @@ class Connection(object):
         Returns a botocore dynamodb client
         """
         if self._client is None:
-            self._client = self.session.create_client(SERVICE_NAME, self.region, endpoint_url=self.host)
+            print("xyzzy creating client." + self.aws_access_key_id + self.aws_secret_access_key)
+            self._client = self.session.create_client(SERVICE_NAME, self.region, endpoint_url=self.host,
+                aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key)
         return self._client
 
     def get_meta_table(self, table_name, refresh=False):

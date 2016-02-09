@@ -31,7 +31,7 @@ From PyPi::
 
 From GitHub::
 
-    $ pip install git+https://github.com/jlafon/PynamoDB#egg=pynamodb
+    $ pip install git+https://github.com/wealthy/PynamoDB#egg=pynamodb
 
 Basic Usage
 ^^^^^^^^^^^

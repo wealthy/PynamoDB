@@ -297,7 +297,6 @@ class Connection(object):
         Returns a botocore dynamodb client
         """
         if self._client is None:
-            print("xyzzy creating client." + self.aws_access_key_id + self.aws_secret_access_key)
             self._client = self.session.create_client(SERVICE_NAME, self.region, endpoint_url=self.host,
                 aws_access_key_id=self.aws_access_key_id, aws_secret_access_key=self.aws_secret_access_key)
         return self._client
